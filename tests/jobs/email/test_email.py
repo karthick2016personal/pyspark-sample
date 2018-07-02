@@ -1,35 +1,40 @@
 """
-test_etl_job.py
+test_email.py
 ~~~~~~~~~~~~~~~
 
 This module contains unit tests for the transformation steps of the ETL
-job defined in etl_job.py. It makes use of a local version of PySpark
+job defined in __init__.py. It makes use of a local version of PySpark
 that is bundled with the PySpark package.
 """
 import unittest
-
 import json
-
 from pyspark.sql.functions import mean
+from pyspark.sql import SparkSession
 
-import etl_job
+from src.jobs import email
 
 
 class SparkETLTests(unittest.TestCase):
-    """Test suite for transformation in etl_job.py
+    """Test suite for transformation in __init__.py
     """
 
     def setUp(self):
         """Start Spark, define config and path to test data
         """
         self.config = json.loads("""{"steps_per_floor": 21}""")
-        self.spark, *_ = etl_job.start_spark()
-        self.test_data_path = 'test_data/'
+        # job_module = importlib.import_module('email')
+        # self.spark, *_ = email.start_spark()
+        self.spark = SparkSession.builder \
+            .master("local") \
+            .appName("emailTest") \
+            .getOrCreate()
+        self.test_data_path = 'tests/jobs/email/test_data/'
 
     def tearDown(self):
         """Stop Spark
         """
         self.spark.stop()
+
 
     def test_transform_data(self):
         """Test data transformer.
@@ -58,12 +63,12 @@ class SparkETLTests(unittest.TestCase):
             ['avg_steps_to_desk'])
 
         # act
-        data_transformed = etl_job.transform_data(input_data, 21)
+        data_transformed = email.transform_data(input_data, 21)
 
-        cols = len(expected_data.columns)
-        rows = expected_data.count()
+        cols = len(data_transformed.columns)
+        rows = data_transformed.count()
         avg_steps = (
-            expected_data
+            data_transformed
             .agg(mean('steps_to_desk').alias('avg_steps_to_desk'))
             .collect()[0]
             ['avg_steps_to_desk'])
@@ -78,3 +83,5 @@ class SparkETLTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+

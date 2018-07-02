@@ -1,5 +1,5 @@
 """
-etl_job.py
+__init__.py
 ~~~~~~~~~~
 
 This Python module contains an example Apache Spark ETL job definition
@@ -13,14 +13,14 @@ example, this example script can be executed as follows,
     --master local[*] \
     --py-files dependencies.zip \
     --files etl_config.json \
-    etl_job.py
+    __init__.py
 
 where dependencies.zip contains Python modules required by ETL job (in
 this example it contains a class to provide access to Spark's logger),
 which need to be made available to each executor process on every node
 in the cluster; etl_config.json is a text file sent to the cluster,
 containing a JSON object with all of the configuration parameters
-required by the ETL job; and, etl_job.py contains the Spark application
+required by the ETL job; and, __init__.py contains the Spark application
 to be executed by a driver process on the Spark master node.
 
 For more details on submitting Spark applications, please see here:
@@ -42,10 +42,10 @@ from pyspark.sql import SparkSession, Row
 from pyspark.sql.functions import *
 
 # local dependencies
-from dependencies import logging
+import logging
 
 
-def main():
+def analyze(files=['etl_config.json']):
     """Main ETL script definition.
 
     :return: None
@@ -78,7 +78,7 @@ def extract_data(spark):
     df = (
         spark
         .read
-        .parquet('tests/test_data/employees'))
+        .parquet('../tests/jobs/email/test_data/employees'))
 
     return df
 
@@ -207,7 +207,7 @@ def start_spark(app_name='my_spark_app', master='local[*]', jar_packages=[],
 
     # create session and retrieve Spark logger object
     spark_sess = spark_builder.getOrCreate()
-    spark_logger = logging.Log4j(spark_sess)
+    spark_logger = logging.Logger(spark_sess)
 
     # get config file if sent to cluster with --files
     spark_files_dir = SparkFiles.getRootDirectory()
@@ -231,7 +231,3 @@ def start_spark(app_name='my_spark_app', master='local[*]', jar_packages=[],
         return_tup = spark_sess, spark_logger
     return return_tup
 
-
-# entry point for PySpark ETL application
-if __name__ == '__main__':
-    main()
